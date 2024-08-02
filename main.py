@@ -28,10 +28,9 @@ cur = conn.cursor()
 
 # Критический путь
 query = """SELECT * FROM operations"""
-df = pd.read_sql(query, conn)
+df_oper = pd.read_sql(query, conn)
 
-operations = prepare_operations(df)
-print(operations)
+operations = prepare_operations(df_oper)
 critical_path = compute_critical_path(operations)
 print("Critical Path:", critical_path)
 
