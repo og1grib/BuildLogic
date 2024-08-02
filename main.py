@@ -36,4 +36,3 @@ print("Critical Path:", critical_path)
 
 cur.close()
 conn.close()
-    
