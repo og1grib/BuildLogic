@@ -11,6 +11,7 @@ def prepare_operations(df):
             'early_finish': 0,
             'late_start': 0,
             'late_finish': 0,
+            'resources': ast.literal_eval(row['resources']),
             'is_critical': False
         }
     return operations

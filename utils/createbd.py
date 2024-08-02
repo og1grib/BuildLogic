@@ -1,5 +1,3 @@
-
-
 def create_database(cur):
 
     cur.execute("""CREATE TABLE IF NOT EXISTS operations (
@@ -15,7 +13,7 @@ def create_database(cur):
 
     cur.execute("""CREATE TABLE IF NOT EXISTS resources (
         type VARCHAR(255) PRIMARY KEY,
-        resource JSONB
+        quantity INT
     );""")
 
     cur.execute("""CREATE TABLE IF NOT EXISTS additional_info (

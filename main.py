@@ -4,8 +4,9 @@ import pandas as pd
 from utils.createbd import create_database
 from utils.config import host, user, password, dbname, port
 from utils.insert_data import insert_resources, insert_operations, insert_operations_from_csv, insert_resources_from_csv
-from algorithms.critical_path import compute_critical_path
+from algorithms.cpm import cpm
 from algorithms.utils import prepare_operations
+from algorithms.rcpm import rcpm
 
 conn = psycopg2.connect(
     host=host, 
@@ -18,21 +19,27 @@ conn = psycopg2.connect(
 conn.autocommit = True
 cur = conn.cursor()
 
-# create_database(cur) # Создать 3 таблицы в БД
+# create_database(cur) # Создать таблицы в БД
 
-# insert_operations_from_csv(cur, 'operations.csv') # Из файла csv операции
-# insert_resources_from_csv(cur, 'resources.csv') # Из файла csv ресурсы
+# insert_operations_from_csv(cur, r'data\operations.csv') # Из файла csv операции
+# insert_resources_from_csv(cur, r'data\resources.csv') # Из файла csv ресурсы
 
 # insert_operations(cur) # Ввод с клавиатуры операции
 # insert_resources(cur) # Ввод с клавиатуры ресурсы
 
 # Критический путь
-query = """SELECT * FROM operations"""
-df_oper = pd.read_sql(query, conn)
+df_operations = pd.read_sql("SELECT * FROM operations", conn)
+df_resources = pd.read_sql("SELECT * FROM resources", conn)
 
-operations = prepare_operations(df_oper)
-critical_path = compute_critical_path(operations)
+operations = prepare_operations(df_operations)
+# critical_path, total_duration = cpm(operations)
+
+# Критический путь с проверкой на ресурсы
+critical_path, total_duration = rcpm(operations, df_resources)
+
 print("Critical Path:", critical_path)
+print("Total Duration of the Project:", total_duration)
+
 
 cur.close()
 conn.close()

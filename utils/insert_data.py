@@ -26,11 +26,11 @@ def insert_operations_from_csv(cur, csv_file):
 def insert_resources_from_csv(cur, csv_file):
     df = pd.read_csv(csv_file)
     
-    df['resource'] = df['resource'].apply(lambda x: json.dumps(eval(x)))
+    # df['resource'] = df['resource'].apply(lambda x: json.dumps(eval(x)))
     records = df.to_records(index=False)
     values = [tuple(record) for record in records]
 
-    query = """INSERT INTO resources (type, resource) VALUES %s"""
+    query = """INSERT INTO resources (type, quantity) VALUES %s"""
     
     execute_values(cur, query, values)
 
@@ -44,14 +44,17 @@ def insert_resources(cur):
         if resource_type.lower() == 'q':
             break
 
-        resource_key = input("Enter resource key: ")
-        resource_value = int(input("Enter resource value: "))
+        # resource_key = input("Enter resource key: ")
+        # resource_value = int(input("Enter resource value: "))
         
-        resource_json = json.dumps({resource_key: resource_value})
-        resources_data.append((resource_type, resource_json))
+        # resource_json = json.dumps({resource_key: resource_value})
+        # resources_data.append((resource_type, resource_json))
+
+        quantity = int(input("Enter quantity: ")) 
+        resources_data.append((resource_type, quantity))
     
     if resources_data:
-        query = """INSERT INTO resources (type, resource) VALUES %s """
+        query = """INSERT INTO resources (type, quantity) VALUES %s """
         execute_values(cur, query, resources_data)
 
 
