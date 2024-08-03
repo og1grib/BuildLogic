@@ -82,3 +82,19 @@ def insert_operations(cur):
     if operations_data:
         query = """INSERT INTO operations (op_id, duration, priority, release_time, predecessors, successors, resources, deadline) VALUES %s"""
         execute_values(cur, query, operations_data)
+
+
+def insert_add_info(cur):
+    info_data = []
+
+    while True:
+        info_id = input("Enter info ID (or 'q' to quit): ")
+        if info_id.lower() == 'q':
+            break
+
+        description = int(input("Enter description: ")) 
+        info_data.append((info_id, description))
+    
+    if info_data:
+        query = """INSERT INTO additional_info (info_id, description) VALUES %s """
+        execute_values(cur, query, info_data)

@@ -1,6 +1,5 @@
 from collections import deque
 
-
 def cpm(operations):
 
     # Инициализация ранних стартов и финишей
