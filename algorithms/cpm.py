@@ -1,7 +1,7 @@
 from collections import deque
 
 def cpm(operations):
-
+    
     # Инициализация ранних стартов и финишей
     for operation in operations.values():
         operation['early_start'] = 0

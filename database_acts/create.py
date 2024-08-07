@@ -1,3 +1,5 @@
+
+
 def create_database(cur):
 
     cur.execute("""CREATE TABLE IF NOT EXISTS operations (

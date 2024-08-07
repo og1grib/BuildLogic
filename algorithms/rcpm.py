@@ -1,51 +1,58 @@
-from tqdm import tqdm
-
 from algorithms.cpm import cpm
+from algorithms.utils import generate_sequence_by_est
 
+def check_resources(sequence, operations, resources):
+    schedule_start_times = {}
+
+    for act in sequence:
+        earliest_start = max([schedule_start_times.get(pre, 0) + operations[pre]['duration'] for pre in operations[act]['predecessors']], default=0)
+        start_time = earliest_start
+
+        while True:
+            resource_usage = {r: 0 for r in resources.keys()}
+            conflict = False
+            conflict_end_time = start_time
+
+            for other_act, other_start in schedule_start_times.items():
+                other_end = other_start + operations[other_act]['duration']
+
+                if not (other_start >= start_time + operations[act]['duration'] or other_end <= start_time):
+                    for r in operations[other_act]['resources']:
+                        resource_usage[r] += 1
+
+            for r in operations[act]['resources']:
+                resource_usage[r] += 1
+
+            for r in resources.keys():
+                if resource_usage[r] > resources[r]:
+                    conflict = True
+                    conflict_end_time = max(conflict_end_time, other_end)
+                    break
+
+            if not conflict:
+                break
+            
+            start_time = conflict_end_time
+
+        schedule_start_times[act] = start_time
+
+    return schedule_start_times
 
 def rcpm(operations, df_resources):
     critical_path, _ = cpm(operations)
+    resources = {res['type']: res['quantity'] for _, res in df_resources.iterrows()}
+    sequence_by_est = generate_sequence_by_est(operations)
+    schedule_start_times = check_resources(sequence_by_est, operations, resources)
 
-    # Проверка ресурсов
-    machines = {res['type']: [0] for _, res in df_resources.iterrows()}
-    
-    for operation in tqdm(sorted(operations.values(), key=lambda op: op['early_start'])):
-        operation_start_time = operation['early_start']
-        
-        # Конфликты
-        while True:
-            conflict = False
-            for resource in operation['resources']:
-                if resource in machines:
-                    available_resources = machines[resource]
+    # Обновление
+    for act, start_time in schedule_start_times.items():
+        delta = start_time - operations[act]['early_start']
+        operations[act]['early_start'] += delta
+        operations[act]['early_finish'] += delta
+        operations[act]['late_start'] += delta
+        operations[act]['late_finish'] += delta
 
-                    for release_time in available_resources:
-                        if release_time > operation_start_time:
-                            conflict = True
-                            operation_start_time = release_time
-                            break
-                    if conflict:
-                        break
-            if not conflict:
-                break
-
-        for resource in operation['resources']:
-            if resource in machines:
-                available_resources = machines[resource]
-                
-                for i in range(len(available_resources)):
-                    if available_resources[i] <= operation_start_time:
-                        available_resources[i] = operation_start_time + operation['duration']
-                        break
-        
-        delta = operation_start_time - operation['early_start']
-
-        operation['early_start'] += delta
-        operation['early_finish'] += delta
-        operation['late_start'] += delta
-        operation['late_finish'] += delta
-
-    # Общая длительность
     total_duration = max(op['early_finish'] for op in operations.values())
-
     return critical_path, total_duration
+
+
