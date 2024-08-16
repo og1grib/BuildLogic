@@ -58,3 +58,19 @@ def check_resource_conflicts(operations, df_resources):
         for r, times in conflicts.items():
             if times:
                 print(f"Конфликты с ресурсом {r} в моменты времени: {times}")
+
+
+def check_precedence_relations(operations):
+    errors = []
+    
+    for act_id, act in operations.items():
+        for pred_id in act['predecessors']:
+            if operations[pred_id]['early_finish'] > act['early_start']:
+                errors.append(f"Операция {act_id} начинается раньше, чем заканчивается её предшественник {pred_id}.")
+
+    if errors:
+        print("Конфликты в предшестовании:")
+        for error in errors:
+            print(error)
+    else:
+        print("Нет конфликтов предешестования.")

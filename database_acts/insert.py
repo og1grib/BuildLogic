@@ -4,12 +4,10 @@ import pandas as pd
 import numpy as np
 from psycopg2.extensions import register_adapter, AsIs
 
-
 register_adapter(np.int64, AsIs)
 register_adapter(np.int32, AsIs)
 register_adapter(np.float64, AsIs)
 register_adapter(np.float32, AsIs)
-
 
 # Из файла csv
 def insert_operations_from_csv(cur, csv_file):
@@ -98,3 +96,24 @@ def insert_add_info(cur):
     if info_data:
         query = """INSERT INTO additional_info (info_id, description) VALUES %s """
         execute_values(cur, query, info_data)
+
+
+def insert_results_to_table(cur, operations):
+
+    for op_id, op in operations.items():
+        cur.execute(f"""INSERT INTO results (
+                op_id, duration, predecessors, successors, resources, 
+                early_start, early_finish, late_start, late_finish, is_critical
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            op_id,
+            op['duration'],
+            str(list(op['predecessors'])),
+            str(list(op['successors'])),
+            str(op['resources']),
+            op['early_start'],
+            op['early_finish'],
+            op['late_start'],
+            op['late_finish'],
+            op['is_critical']
+        ))
