@@ -6,7 +6,7 @@ def check_resources(sequence, operations, resources):
 
     for act in sequence:
         start_time = max([schedule_start_times.get(pre, 0) + operations[pre]['duration'] for pre in operations[act]['predecessors']], default=0)
-
+        
         while True:
             resource_usage = {r: 0 for r in resources.keys()}
             conflict = False
@@ -43,7 +43,7 @@ def rcpm(operations, df_resources):
     sequence_by_est = generate_sequence_by_est(operations)
     schedule_start_times = check_resources(sequence_by_est, operations, resources)
 
-    # Обновление
+    # Обновление всех времен
     for act, start_time in schedule_start_times.items():
         delta = start_time - operations[act]['early_start']
         operations[act]['early_start'] += delta

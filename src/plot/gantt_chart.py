@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-def plot_gantt_chart(operations):
+def plot_gantt_chart(operations) -> None:
     gant_data = []
     
     for op_id, operation in operations.items():
@@ -27,7 +27,7 @@ def plot_gantt_chart(operations):
     plt.show()
 
 
-def plot_gantt_and_resource_chart(operations, resources):
+def plot_gantt_and_resource_chart(operations, resources) -> None:
     schedule = {op_id: op['early_start'] for op_id, op in operations.items()}
     act_proc = {op_id: op['duration'] for op_id, op in operations.items()}
     

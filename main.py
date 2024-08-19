@@ -25,11 +25,10 @@ if __name__ == "__main__":
 
     act = input("Выберите действие: create_tables, drop_table, drop_all_table, insert_csv, insert_manual, calculate_cpm, calculate_rcpm, calculate_ssgs, export_table_to_csv: ")
 
-
     if act == "create_tables":
         create_tables(cur)
     elif act == "drop_table":
-        drop_table(cur)
+        drop_table(cur, "results")
     elif act == "drop_all_table":
         drop_all_tables(cur)
     elif act == "insert_csv":
@@ -65,19 +64,23 @@ if __name__ == "__main__":
 
         insert_results_to_table(cur, operations)
 
-    elif act == "export_table_to_csv":
-        export_table_to_csv(conn, 'results', 'results_output.csv')
-
     elif act == "calculate_ssgs":
         df_operations = pd.read_sql("SELECT * FROM operations", conn)
         df_resources = pd.read_sql("SELECT * FROM resources", conn)
         operations = prepare_operations(df_operations)
 
-        critical_path, total_duration = ssgs(operations, df_resources, use_lft=False)
+        critical_path, total_duration = ssgs(operations, df_resources)
+        print("Critical Path:", critical_path)
+        print("SSGS Total Duration of the Project:", total_duration)
+
         check_resource_conflicts(operations, df_resources)
         check_precedence_relations(operations)
         plot_gantt_and_resource_chart(operations, df_resources)
+
         insert_results_to_table(cur, operations)
+
+    elif act == "export_results_to_csv":
+        export_table_to_csv(conn, 'results', 'results_output.csv')
     
     else:
         print("Такого действия нет!")

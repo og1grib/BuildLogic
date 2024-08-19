@@ -1,75 +1,57 @@
 from .cpm import cpm
-from .utils import generate_sequence_by_est
 
-def ssgs(operations, resources, use_lft=False):
+def ssgs(operations, df_resources, use_pr=False):
     critical_path, _ = cpm(operations)
-    schedule_start_times = {}
-    scheduled_activities = []
+    resources = {res['type']: res['quantity'] for _, res in df_resources.iterrows()}
 
-    # Основной цикл для планирования операций
-    for _ in range(len(operations)):
-        eligible_activities = [
-            act_id for act_id, act_data in operations.items()
-            if act_id not in scheduled_activities and all(pred in scheduled_activities for pred in act_data['predecessors'])
-        ]
+    start_times = {}
+    finish_times = {}
+    scheduled = []
+    max_time = sum(op['duration'] for op in operations.values())
+    resource_availability = {r: [resources[r]] * max_time for r in resources.keys()}
+
+    while len(scheduled) < len(operations):
+        eligible_activities = [act for act in operations if act not in scheduled and all(pre in scheduled for pre in operations[act]['predecessors'])]
 
         if not eligible_activities:
-            print('Не удалось создать корректное расписание.')
+            print('Расписание нельзя составить.')
             break
 
-        # Используем правило приоритета для выбора операции
-        if use_lft:
-            selected_activity = min(eligible_activities, key=lambda x: operations[x]['late_finish'])
+        # min-lft приоритет
+        if use_pr:
+            pr = {act: operations[act]['late_finish'] for act in eligible_activities}
+            current_act = min(pr, key=pr.get)
         else:
-            selected_activity = eligible_activities.pop(0)
+            current_act = eligible_activities[0]
 
-        # Определяем самое раннее возможное время начала операции
-        earliest_start = max(
-            [schedule_start_times.get(pred, 0) + operations[pred]['duration'] for pred in operations[selected_activity]['predecessors']],
-            default=0
-        )
-        start_time = earliest_start
+        earliest_start = max(finish_times.get(pre, 0) for pre in operations[current_act]['predecessors']) if operations[current_act]['predecessors'] else 0
+        duration = operations[current_act]['duration']
 
-        # Цикл для проверки доступности ресурсов и предотвращения конфликтов
-        while True:
-            resource_usage = {r: 0 for r in resources.keys()}
-            conflict = False
-            conflict_end_time = start_time
+        eligible_times = []
+        for t in range(earliest_start, max_time):
+            if all(resource_availability[r][t:t + duration].count(resources[r]) >= duration for r in operations[current_act]['resources']):
+                eligible_times.append(t)
 
-            for other_act, other_start in schedule_start_times.items():
-                other_end = other_start + operations[other_act]['duration']
+        if eligible_times:
+            start_time = min(eligible_times)
+            finish_time = start_time + duration
+            start_times[current_act] = start_time
+            finish_times[current_act] = finish_time
+            scheduled.append(current_act)
 
-                if not (other_start >= start_time + operations[selected_activity]['duration'] or other_end <= start_time):
-                    for r in operations[other_act]['resources']:
-                        if r in resource_usage:  # Убедимся, что ресурс существует в словаре
-                            resource_usage[r] += 1
-
-            for r in operations[selected_activity]['resources']:
-                if r in resource_usage:  # Убедимся, что ресурс существует в словаре
-                    resource_usage[r] += 1
-
-            # Проверка на конфликты по ресурсам
-            for r in resources.keys():
-                if resource_usage[r] > resources[r]:
-                    conflict = True
-                    conflict_end_time = max(conflict_end_time, other_end)
-                    break
-
-            if not conflict:
-                break
+            for r in operations[current_act]['resources']:
+                for time_slot in range(start_time, finish_time):
+                    resource_availability[r][time_slot] -= 1
+        else:
+            print(f"Операция {current_act} не может быть поставлена в расписание.")
             
-            start_time = conflict_end_time
-
-        # Фиксируем время начала и конца операции
-        schedule_start_times[selected_activity] = start_time
-        scheduled_activities.append(selected_activity)
-
-        # Обновление временных характеристик операции
-        delta = start_time - operations[selected_activity]['early_start']
-        operations[selected_activity]['early_start'] += delta
-        operations[selected_activity]['early_finish'] += delta
-        operations[selected_activity]['late_start'] += delta
-        operations[selected_activity]['late_finish'] += delta
+    # Обновление всех времен
+    for act, start_time in start_times.items():
+        delta = start_time - operations[act]['early_start']
+        operations[act]['early_start'] += delta
+        operations[act]['early_finish'] += delta
+        operations[act]['late_start'] += delta
+        operations[act]['late_finish'] += delta
 
     total_duration = max(op['early_finish'] for op in operations.values())
-    return scheduled_activities, total_duration
+    return critical_path, total_duration

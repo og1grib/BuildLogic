@@ -32,7 +32,7 @@ def generate_sequence_by_est(operations) -> list:
     return sequence_by_est
 
 
-def check_resource_conflicts(operations, df_resources):
+def check_resource_conflicts(operations, df_resources) -> None:
     resources = {row['type']: row['quantity'] for _, row in df_resources.iterrows()}
 
     total_time = max(op['early_finish'] for op in operations.values())
@@ -61,7 +61,7 @@ def check_resource_conflicts(operations, df_resources):
                 print(f"Конфликты с ресурсом {r} в моменты времени: {times}")
 
 
-def check_precedence_relations(operations):
+def check_precedence_relations(operations) -> None:
     errors = []
     
     for act_id, act in operations.items():
