@@ -1,8 +1,9 @@
 import ast
 import numpy as np
 
-def prepare_operations(df):
+def prepare_operations(df) -> dict:
     operations = {}
+
     for _, row in df.iterrows():
         operations[row['op_id']] = {
             'duration': row['duration'],
@@ -17,7 +18,7 @@ def prepare_operations(df):
         }
     return operations
 
-def generate_sequence_by_est(operations):
+def generate_sequence_by_est(operations) -> list:
     est_copy = {op_id: op['early_start'] for op_id, op in operations.items()}
     all_activities = list(operations.keys())
     sequence_by_est = []

@@ -1,12 +1,11 @@
-from algorithms.cpm import cpm
-from algorithms.utils import generate_sequence_by_est
+from .cpm import cpm
+from .utils import generate_sequence_by_est
 
 def check_resources(sequence, operations, resources):
     schedule_start_times = {}
 
     for act in sequence:
-        earliest_start = max([schedule_start_times.get(pre, 0) + operations[pre]['duration'] for pre in operations[act]['predecessors']], default=0)
-        start_time = earliest_start
+        start_time = max([schedule_start_times.get(pre, 0) + operations[pre]['duration'] for pre in operations[act]['predecessors']], default=0)
 
         while True:
             resource_usage = {r: 0 for r in resources.keys()}

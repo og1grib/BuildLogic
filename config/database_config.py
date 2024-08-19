@@ -1,5 +1,5 @@
 host = "localhost"
 dbname="postgres"
 user = "postgres"
-password = "123"
+password = "1234"
 port = 5432

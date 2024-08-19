@@ -1,5 +1,5 @@
-from algorithms.cpm import cpm
-from algorithms.utils import generate_sequence_by_est
+from .cpm import cpm
+from .utils import generate_sequence_by_est
 
 def ssgs(operations, resources, use_lft=False):
     critical_path, _ = cpm(operations)
