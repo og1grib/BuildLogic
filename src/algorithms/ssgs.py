@@ -14,7 +14,7 @@ def ssgs(operations, df_resources, use_pr=False):
         eligible_activities = [act for act in operations if act not in scheduled and all(pre in scheduled for pre in operations[act]['predecessors'])]
 
         if not eligible_activities:
-            print('Расписание нельзя составить!!!')
+            print('!!! The schedule cannot be done !!!')
             break
 
         # min-lft приоритет
@@ -43,7 +43,7 @@ def ssgs(operations, df_resources, use_pr=False):
                 for time_slot in range(start_time, finish_time):
                     resource_availability[r][time_slot] -= 1
         else:
-            print(f"Операция {current_act} не может быть поставлена в расписание.")
+            print(f"Operation {current_act} cannot added in the schedule.")
             
     # Обновление всех времен
     for act, start_time in start_times.items():
@@ -79,7 +79,7 @@ def local_ssgs(operations, df_resources, selected_tasks, use_pr=True):
         eligible_activities = [act for act in selected_operations if act not in scheduled]
 
         if not eligible_activities:
-            print('Расписание нельзя обновить!!!')
+            print('!!!The schedule cannot be updated!!!')
             break
 
         # min-lft приоритет
@@ -108,7 +108,8 @@ def local_ssgs(operations, df_resources, selected_tasks, use_pr=True):
                 for time_slot in range(start_time, finish_time):
                     resource_availability[r][time_slot] -= 1
         else:
-            print(f"Операция {current_act} не может быть поставлена в расписание.")
+            print(f"Operation {current_act} cannot added in the schedule.")
+
             
     # Обновление всех времен
     for act, start_time in start_times.items():

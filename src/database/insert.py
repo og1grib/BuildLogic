@@ -8,106 +8,84 @@ register_adapter(np.int64, AsIs)
 register_adapter(np.int32, AsIs)
 register_adapter(np.float64, AsIs)
 register_adapter(np.float32, AsIs)
+register_adapter(np.bool_, AsIs)
 
 # Из файла csv
-def insert_operations_from_csv(cur, csv_file) -> None:
-    df = pd.read_csv(csv_file)
+def insert_from_csv(cur, csv_file, table_name) -> None:
+    # Проверка таблицы на чистоту. Если не чистая, то чистим и загружаем данные
+    cur.execute(f"SELECT COUNT(*) FROM {table_name}")
+    count = cur.fetchone()[0]
         
-    records = df.to_records(index=False)
-    values = [tuple(record) for record in records]
-
-    query = """INSERT INTO operations (op_id, duration, priority, release_time, predecessors, successors, resources) VALUES %s"""
+    if count > 0:
+        print(f"Table {table_name} is not empty. Clearing the table before uploading new data.")
+        cur.execute(f"TRUNCATE TABLE {table_name} CASCADE")
+        print(f"Table {table_name} has been cleared.")
     
-    execute_values(cur, query, values)
-    print(f"Данные из файла {csv_file} успешно загружены в таблицу operations.")
+    # Столбцы в таблице
+    cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}' AND table_schema = 'public'")
+    columns = [row[0] for row in cur.fetchall()]
 
-
-def insert_resources_from_csv(cur, csv_file) -> None:
     df = pd.read_csv(csv_file)
+    df = df.astype(object).where(pd.notna(df), None)
     
-    records = df.to_records(index=False)
+    missing_columns = [col for col in columns if col not in df.columns]
+    if missing_columns:
+        print(f"Attention! In file {csv_file} missing columns: {', '.join(missing_columns)}")
+        print(f"!!!The data from {csv_file} was not uploaded!!!")
+        return
+    
+    records = df[columns].to_records(index=False)
     values = [tuple(record) for record in records]
 
-    query = """INSERT INTO resources (type, quantity) VALUES %s"""
+    query = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES %s"
     
     execute_values(cur, query, values)
-    print(f"Данные из файла {csv_file} успешно загружены в таблицу resources.")
+    print(f"The data from {csv_file} has been uploaded successfully to the table.")
+
 
 # Ручной ввод
-def insert_resources(cur) -> None:
-    resources_data = []
+def insert_manually(cur, table_name) -> None:
+    # Список столбцов
+    cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}' AND table_schema = 'public'")
+    columns = [row[0] for row in cur.fetchall()]
+
+    data_to_insert = []
 
     while True:
-        resource_type = input("Enter resource type (or 'q' to quit): ")
-        if resource_type.lower() == 'q':
-            break
-
-        quantity = int(input("Enter quantity: ")) 
-        resources_data.append((resource_type, quantity))
-    
-    if resources_data:
-        query = """INSERT INTO resources (type, quantity) VALUES %s """
-        execute_values(cur, query, resources_data)
-    
-    print(f"Введенные данные успешно загружены в таблицу resources.")
-
-
-
-def insert_operations(cur):
-    operations_data = []
-
-    while True:
-        op_id = input("Enter operation ID (or 'q' to quit): ")
-        if op_id.lower() == 'q':
-            break
-
-        duration = int(input("Enter duration: "))
-        priority = int(input("Enter priority: "))
-        release_time = int(input("Enter release time: "))
-        predecessors = input("Enter predecessors: ")
-        successors = input("Enter successors: ")
-        resources = input("Enter resources: ")
-        deadline = input("Enter deadline: ")
+        row_data = []
+        print(f"\nEnter data for table '{table_name}' (or type 'q' to quit):")
         
-        if deadline.lower() == 'none':
-            deadline = None
-        
-        operations_data.append((op_id, duration, priority, release_time, predecessors, successors, resources, deadline))
-    
-    if operations_data:
-        query = """INSERT INTO operations (op_id, duration, priority, release_time, predecessors, successors, resources, deadline) VALUES %s"""
-        execute_values(cur, query, operations_data)
+        for column in columns:
+            value = input(f"Enter value for '{column}': ")
+            if value.lower() == 'q':
+                if data_to_insert:
+                    # Вставляем данные в таблицу
+                    placeholders = ", ".join(["%s"] * len(columns))
+                    query = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({placeholders})"
+                    cur.executemany(query, data_to_insert)
+                    print(f"Data successfully inserted into table '{table_name}'.")
+                else:
+                    print("No data to insert.")
+                return
+            
+            row_data.append(value)
 
-    print(f"Введенные данные успешно загружены в таблицу operations.")
-    
-
-
-def insert_add_info(cur) -> None:
-    info_data = []
-
-    while True:
-        info_id = input("Enter info ID (or 'q' to quit): ")
-        if info_id.lower() == 'q':
-            break
-
-        description = int(input("Enter description: ")) 
-        info_data.append((info_id, description))
-    
-    if info_data:
-        query = """INSERT INTO additional_info (info_id, description) VALUES %s """
-        execute_values(cur, query, info_data)
-
-    print(f"Введенные данные успешно загружены в таблицу additional_info.")
+        data_to_insert.append(tuple(row_data))
 
 
+# Результаты
 def insert_results_to_table(cur, operations) -> None:
+    # Очистка таблицы результатов 
+    cur.execute("DELETE FROM results") 
 
-    cur.execute("DELETE FROM results") # Очистка таблицы результатов 
-    
+    # Столбцы из results
+    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'results' AND table_schema = 'public'")
+    columns = [row[0] for row in cur.fetchall()]
+
+    values = []
     for op_id, op in operations.items():
-        cur.execute(f"""INSERT INTO results (op_id, duration, predecessors, successors, resources, early_start, early_finish, late_start, late_finish, is_critical) 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", 
-            (op_id,
+        row_data = [
+            op_id,
             op['duration'],
             str(list(op['predecessors'])),
             str(list(op['successors'])),
@@ -116,7 +94,14 @@ def insert_results_to_table(cur, operations) -> None:
             op['early_finish'],
             op['late_start'],
             op['late_finish'],
-            op['is_critical'])
-            )
-        
-    print(f"Результаты успешно сохранены в таблице results.")
+            op['is_critical']
+        ]
+        values.append(tuple(row_data))
+    
+    placeholders = ', '.join(['%s'] * len(columns))
+    query = f"INSERT INTO results ({', '.join(columns)}) VALUES ({placeholders})"
+    cur.executemany(query, values)
+
+    print(f"Data successfully saved into table 'results'.")
+    
+    

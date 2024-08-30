@@ -1,6 +1,7 @@
 import ast
 import numpy as np
 
+# Словарь для алгоритмов планирования
 def prepare_operations(df) -> dict:
     operations = {}
 
@@ -18,6 +19,7 @@ def prepare_operations(df) -> dict:
         }
     return operations
 
+# Последовательность по EST
 def generate_sequence_by_est(operations) -> list:
     est_copy = {op_id: op['early_start'] for op_id, op in operations.items()}
     all_activities = list(operations.keys())
@@ -45,7 +47,7 @@ def check_resource_conflicts(operations, df_resources) -> None:
             if r in resource_usage:
                 resource_usage[r][start:end] += 1
             else:
-                print(f"Ресурс {r} не найден.")
+                print(f"!!!Resource {r} not found!!!")
 
     conflicts = {r: [] for r in resources.keys()}
     for r, usage in resource_usage.items():
@@ -54,11 +56,11 @@ def check_resource_conflicts(operations, df_resources) -> None:
                 conflicts[r].append(t)
     
     if all(not times for times in conflicts.values()):
-        print("Нет конфликтов ресурсов.")
+        print("No resource conflicts.")
     else:
         for r, times in conflicts.items():
             if times:
-                print(f"Конфликты с ресурсом {r} в моменты времени: {times}")
+                print(f"!!!Conflict with resource '{r}' in time: {times}")
 
 
 def check_precedence_relations(operations) -> None:
@@ -67,11 +69,11 @@ def check_precedence_relations(operations) -> None:
     for act_id, act in operations.items():
         for pred_id in act['predecessors']:
             if operations[pred_id]['early_finish'] > act['early_start']:
-                errors.append(f"Операция {act_id} начинается раньше, чем заканчивается её предшественник {pred_id}.")
+                errors.append(f"!!!Operation '{act_id}' starts earlier than its predecessor '{pred_id}' ends!!!")
 
     if errors:
-        print("Конфликты в предшестовании:")
+        print("!!!Conflicts with relationships:")
         for error in errors:
             print(error)
     else:
-        print("Нет конфликтов предешестования.")
+        print("No relationsips conflicts.")
