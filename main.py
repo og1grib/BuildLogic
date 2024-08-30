@@ -86,7 +86,7 @@ Your choice: """)
             3 - drop_all_tables,
             4 - insert_csv,
             5 - insert_manually,
-            6 - export_table_to_csv
+            6 - export_table_to_csv.
 Your choice: """)
         
         if act == "1":
@@ -125,7 +125,7 @@ Your choice: """)
             1 - calculate_cpm, 
             2 - calculate_rcpm, 
             3 - calculate_ssgs, 
-            4 - calculate_rcpm_with_local_sgs
+            4 - calculate_rcpm_with_local_sgs.
 Your choice: """)
         
         # Запросы для выполнения планирования
@@ -166,18 +166,49 @@ Your choice: """)
     
     elif scr == "3":
         act = input("""Select the action: 
-            1 - plot_gantt_chart         
-            2 - plot_gantt_and_resource_chart             
+            1 - plot_gantt_chart,         
+            2 - plot_gantt_and_resource_chart,
+            3 - calculate_completion_percentage,
+            4 - detect_project_delays,
+            5 - calculate_new_schedule_with_work_not_done.        
 Your choice: """)
         df_results = pd.read_sql("SELECT * FROM results", conn)
         df_resources = pd.read_sql("SELECT * FROM resources", conn)
+        df_current_status = pd.read_sql("SELECT * FROM current_status", conn)
+        df_operations = pd.read_sql("SELECT * FROM operations", conn)
 
         if act == "1":
             plot_gantt_chart(df_results)
              
         elif act == "2":
             plot_gantt_and_resource_chart(df_results, df_resources)
-         
+
+        elif act == "3":
+            calculate_completion_percentage(df_current_status)
+
+        elif act == "4":
+            detect_project_delays(df_results, df_current_status)
+
+        elif act == "5":
+            completed_tasks = df_current_status[df_current_status['is_done'] == True]['op_id'].tolist()
+            df_operations_filtered = df_operations[~df_operations['op_id'].isin(completed_tasks)]
+            print(df_operations_filtered)
+            algo = input("""Select the algorithm: 
+            1 - calculate_cpm, 
+            2 - calculate_rcpm, 
+            3 - calculate_ssgs.
+Your choice: """)
+            if algo == "1":
+                pass
+
+            elif algo == "2":
+                pass
+
+            elif algo == "3":
+                pass
+
+            else:
+                print("Такого алгоритма нет!") 
         else:
             print("Такого действия нет!")  
 

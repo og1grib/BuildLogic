@@ -1,0 +1,16 @@
+op_id,duration,predecessors,successors,resources,early_start,early_finish,late_start,late_finish,is_critical
+TASK1/_/1,1,[],['TASK1/_/2'],['RES1'],0,1,1,2,False
+TASK1/_/2,1,['TASK1/_/1'],"['TASK1/_/3', 'TASK2/_/4']",['RES1'],2,3,3,4,False
+TASK1/_/3,1,['TASK1/_/2'],['TASK1/_/5'],['RES1'],3,4,6,7,False
+TASK2/_/4,1,['TASK1/_/2'],['TASK2/_/6'],['RES2'],3,4,4,5,False
+TASK1/_/5,1,['TASK1/_/3'],[],['RES2'],5,6,8,9,False
+TASK2/_/6,1,['TASK2/_/4'],['TASK3/_/8'],['RES1'],4,5,5,6,False
+TASK3/_/7,1,[],['TASK3/_/8'],['RES2'],0,1,4,5,False
+TASK3/_/8,1,"['TASK3/_/7', 'TASK2/_/6']",['TASK3/_/9'],['RES1'],5,6,6,7,False
+TASK3/_/9,1,['TASK3/_/8'],[],"['RES1', 'RES2']",6,7,7,8,False
+TASK4/_/10,1,[],['TASK4/_/11'],"['RES1', 'RES1']",1,2,1,2,True
+TASK4/_/11,1,['TASK4/_/10'],['TASK4/_/12'],['RES2'],2,3,2,3,True
+TASK4/_/12,1,['TASK4/_/11'],['TASK4/_/13'],['RES2'],4,5,4,5,True
+TASK4/_/13,1,['TASK4/_/12'],['TASK4/_/14'],['RES1'],5,6,5,6,True
+TASK4/_/14,1,['TASK4/_/13'],['TASK4/_/15'],['RES1'],6,7,6,7,True
+TASK4/_/15,2,['TASK4/_/14'],[],['RES1'],7,9,7,9,True
